@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Lego Checkout Calculator</title>
+	<link rel="stylesheet" href="css/bootstrap.min.css">
+	<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+	<link rel="stylesheet" href="css/main.css">
+
+</head>
+<body>
+<div id="test">
+</div>
+
+<div id="App">
+	<nav class="navbar navbar-default">
+	  <div class="container">
+		<!-- Brand and toggle get grouped for better mobile display -->
+
+		<a class="navbar-brand" style="position:absolute;" href="#">Brand</a>
+
+		<!-- Collect the nav links, forms, and other content for toggling -->
+
+		<ul class="nav navbar-nav nav-pills pull-right">
+			<!--<li class="dropdown">
+			  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Account<b class="caret"></b></a>
+			  <ul class="dropdown-menu">
+				<li><a href="#">Action</a></li>
+				<li><a href="#">Another action</a></li>
+				<li><a href="#">Something else here</a></li>
+				<li class="divider"></li>
+				<li><a href="#">Create new account</a></li>
+			  </ul>
+			</li>-->
+		</ul>
+	  </div><!-- /.container-fluid -->
+	</nav>
+
+	<!-- Nav tabs -->
+	<ul class="nav nav-tabs"></ul>
+
+	<!-- Tab panes -->
+	<div class="tab-content"></div>
+</div>
+
+<!--
+<button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#accountModel">
+  Launch demo modal
+</button>
+-->
+<!-- Account Registration Modal -->
+<div class="modal fade" id="RegModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Create Account</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal" role="form">
+		  <div class="form-group">
+			<label for="inputAccount" class="col-sm-2 control-label">Account</label>
+			<div class="col-sm-10">
+			  <input type="text" class="form-control" id="inputAccount" placeholder="Account Number">
+			</div>
+		  </div>
+		  <div class="form-group">
+			<label for="inputBalance" class="col-sm-2 control-label">Balance</label>
+			<div class="col-sm-10">
+			  <input type="number" class="form-control" id="inputBalance" placeholder="$">
+			</div>
+		  </div>
+		</form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal fade" id="CheckoutModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="myModalLabel">Checkout</h4>
+      </div>
+		<table class="table table-striped" style="/*width:300px*/">
+			<tr>
+			  <th>Item</th>
+			  <th>Price</th> 
+			  <th>Num</th>
+			  <th>Sum</th>
+			</tr>
+			<tr id="checkout-result">
+			  <td style="font-weight:bold;">Your Have</td>
+			  <td id="cur-balance" class="price"></td> 
+			  <td style="font-weight:bold;">Total</td>
+			  <td id="total-cost" class="price"></td>
+			</tr>
+		</table>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary">Checkout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+	
+	{% csrf_token %}
+
+	<script src="js/jquery-1.11.0.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/underscore-min.js"></script>
+	<script src="js/backbone-min.js"></script>
+	<script src="js/main.js"></script>
+	
+</body>
+</html>
