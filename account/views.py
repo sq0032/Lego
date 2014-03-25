@@ -3,6 +3,7 @@ from django.http import Http404, HttpResponse
 from account.models import Account, Item
 import json
 #from django.utils import simplejson
+
 # Create your views here.
 def account(request):
     res = []

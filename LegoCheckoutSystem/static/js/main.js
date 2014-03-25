@@ -20,9 +20,10 @@ app.Accounts = Backbone.Collection.extend({
 //Item Model
 app.LegoItem = Backbone.Model.extend({
 	default:{
-		image:null,
-		name:null,
-		unitprice:null,
+		image:	null,
+		name:	null,
+		price:	null,
+		attr:	null,
 	}
 });
 
@@ -53,11 +54,12 @@ app.AccountView = Backbone.View.extend({
 	tagName: 'li',
 	className: 'dropdown',
 	events:{
-		"click":"loadData",
+		"click":"selectAccount",
 	},
 	initialize: function(){
 		this.account = this.model;
-		//this.listenTo(this.collection, "sync", this.render);
+		
+		this.listenTo(this.model, "change", this.renderAccount);
 	},
 	render: function(){
 		var name = this.account.get('name');
@@ -70,9 +72,17 @@ app.AccountView = Backbone.View.extend({
 		
 		return this;
 	},
-	loadData: function(){
+	renderAccount: function(){
 		var name = this.account.get('name');
-		alert(name);
+		var balance = this.account.get('balance');
+		this.$('a').text(name+'  $'+balance);
+	},
+	selectAccount: function(){
+		var name = this.account.get('name');
+		var balance = this.account.get('balance');
+		var id = this.account.get('id');
+
+		app.account.set({id:id,name:name,balance:balance});
 	},
 });
 
@@ -87,16 +97,17 @@ app.LegoItemView = Backbone.View.extend({
 		this.listenTo(this.model, "change", this.render);
 	},
 	render: function(){
-		var name = this.model.get('name');
-		var unitprice=  this.model.get('unitprice');
-		var imagepath = this.model.get('image');
+		var name 		= this.model.get('name');
+		var price		= this.model.get('price');
+		var imagepath 	= this.model.get('image');
+		var attr		= this.model.get('attr');
 //	console.log(imagepath);
 		this.$el.html(
 			'  <div class="	col-sm-6 col-md-3">\
 				<div class="thumbnail">\
 				  <img src="img/'+imagepath+'" alt="...">\
-				  <p class="thumb-price">'+unitprice+'</p>\
-				  <p class="thumb-description">1X16</p>\
+				  <p class="thumb-price">'+price+'</p>\
+				  <p class="thumb-description">'+attr+'</p>\
 				  <div class="caption">\
 					<p>\
 						<button class="btn btn-default btn-buy">\
@@ -210,15 +221,14 @@ app.RegModalView = Backbone.View.extend({
 	createAccount:function(){
 		var name = this.$name.val();
 		var balance = this.$balance.val();
-		alert('account:'+name+'  balance:'+balance);
+		//alert('account:'+name+'  balance:'+balance);
 
 		var data = {name:name,balance:balance};
 		var account = new app.Account(data);
 		account.url = 'account/';
 		
-		app.accounts.create(account);
+		app.accountlist.create(account);
 		$('#RegModal').modal('hide');
-//		this.modal('hide');
 	},
 });
 
@@ -236,8 +246,8 @@ app.CheckoutModalView = Backbone.View.extend({
 	showModel:function(){
 		var that = this;
 		var total = 0.;
-		var account = app.accounts.models[0].get('name');
-		var balance = app.accounts.models[0].get('balance');
+		var account = app.account.get('name');
+		var balance = app.account.get('balance');
 
 		that.$('table').html('');
 		
@@ -286,19 +296,46 @@ app.CheckoutModalView = Backbone.View.extend({
 						<td style="font-weight:bold;">You Have</td>\
 						<td id="cur-balance" class="price">'+balance+'</td>\
 						<td style="font-weight:bold;">Total</td>\
-						<td id="total-cost" class="price" style="font-weight:bold">'+total+'</td>\
+						<td id="total-cost" class="price" style="font-weight:bold;color:'+(((balance-total)<0)?'red;':'black;')+'">'+total+'</td>\
 					<tr>'
 					);
+		//alert((((balance-total)<0)?'red':'black'));
 		that.$('table').append($trFooter);
+		
+		if(app.account.get('name') == undefined){
+			this.$('.btn-primary').attr("disabled", true);
+		}else{
+			this.$('.btn-primary').attr("disabled", false);
+		}
 	},
 	checkout:function(){
-
+		//Get the current balance and the total cost
+		var balance = app.account.get('balance');
+		var cost = this.$('#total-cost').text();
+		
+		//Calculate new balance
+		balance = balance-parseFloat(cost);
+		
+		//Update balance value for account models
+		app.account.set({balance:(balance).toFixed(2)});
+		var account = app.accountlist.get(app.account.get('id'));
+		account.set({balance:(balance).toFixed(2)});
+		
+		//Clear cart
+		for(var i=0; i< app.appview.typeviews.length; i++){
+			//Looking into each lego item
+			for( var j=0; j<app.appview.typeviews[i].legoitemview.length; j++){
+				var view = app.appview.typeviews[i].legoitemview[j];
+				view.$('.thumb-newquantity').text(0).css('display','none');
+			}
+		}
+		
+		//Close the modal
 		$('#CheckoutModal').modal('hide');
-//		this.modal('hide');
+
 	},
 });
 
-//$('#myModal').modal('show')
 //AppView
 app.appView = Backbone.View.extend({
 	el: '#App',
@@ -309,7 +346,8 @@ app.appView = Backbone.View.extend({
 	},
 	initialize:function(option){
 		//Global Variables 
-		app.accounts = new app.Accounts();
+		app.account = new app.Account();
+		app.accountlist = new app.Accounts();
 		app.regModalView = new app.RegModalView();
 		app.CheckoutModalView = new app.CheckoutModalView();
 
@@ -319,14 +357,17 @@ app.appView = Backbone.View.extend({
 
 		//Local Variables-Views
 		this.typeviews = [];
+		this.accountviews = [];
 		
 		this.listenTo(this.legotypes, "change", this.renderType);
-		//this.listenTo(app.accounts, "sync", this.renderAccounts);
-		this.listenTo(app.accounts, "add", this.renderAccount);
+		//this.listenTo(app.accountlist, "sync", this.renderAccounts);
+		this.listenTo(app.accountlist, "add", this.renderAccount);
+		//this.listenTo(app.accountlist, "change", this.renderAccount);
+		this.listenTo(app.account, "change", this.renderTest);
 		this.render();
 		this.renderType();
 		
-		app.accounts.fetch();
+		app.accountlist.fetch();
 	},
 	render:function(){
 		var that = this;
@@ -338,7 +379,7 @@ app.appView = Backbone.View.extend({
 					<a class="navbar-brand" style="position:absolute;" href="#">Brand</a>\
 					<ul class="nav navbar-nav nav-pills pull-right">\
 						<li class="dropdown">\
-							<a href="#" class="dropdown-toggle" data-toggle="dropdown">Account<b class="caret"></b></a>\
+							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span id="account-title">Account</span><b class="caret"></b></a>\
 							<ul class="dropdown-menu">\
 								<li class="divider"></li>\
 								<li id="new-account"><a href="#">Create new account</a></li>\
@@ -351,6 +392,9 @@ app.appView = Backbone.View.extend({
 			<ul class="nav nav-tabs"></ul>\
 			<!-- Tab panes -->\
 			<div class="tab-content"></div>\
+			\
+			\
+			\
 			<button id="resetBtn" style="position:fixed; bottom:20px; right:160px" type="button" class="btn btn-default">Reset</button>\
 			<button id="checkoutBtn" style="position:fixed; bottom:20px; right:50px" type="button" class="btn btn-primary">Checkout</button>'
 		);
@@ -365,50 +409,61 @@ app.appView = Backbone.View.extend({
 		},this);
 	},
 	renderAccounts:function(){
-		alert('complete sync');
-		app.accounts.each(function(account){
+		//alert('complete sync');
+		app.accountlist.each(function(account){
 			this.renderAccount(account);
 		},this);
 	},
 	renderAccount:function(account){
-		alert(account.get('name'));
+		//alert(account.get('name'));
 		var accountView = new app.AccountView({model:account});
 		$('.divider').before(accountView.render().el);
+		//this.accountvies.push(accountView);
 	},
 	createAccount:function(){
-		//alert('createaccount');
-		//$('#RegModal').trigger('show');
 		$('#RegModal').modal('show');
 	},
 	reset:function(){
-		
 	},
 	checkout:function(){
 		$('#CheckoutModal').modal('show');
 	},
+	renderTest: function(){
+		var name = app.account.get('name');
+		var balance = app.account.get('balance');
+		this.$("#account-title").text(name+': $'+balance);
+	},
 });
 
 $(function(){
+	//app.item = new app.LegoItem()
+
 	//BRICK&TILE
 	//Create Brick Models
-	app.B1X2Grey = new app.LegoItem({image:'Brick/01Brick1X2Grey.png',
-									 name: 'Brick 1X2 Grey',
-									 unitprice: 125.00});
+	app.B1X2Grey = new app.LegoItem({image	:'Brick/01Brick1X2Grey.png',
+									 name	:'Brick 1X2 Grey',
+									 price	:125.00,
+									 attr	:'1x2 Grey'});
 	app.B1X2Green = new app.LegoItem({image:'Brick/03Brick1X2GreenTranslucent.png',
-									 name: 'Brick 1X2 Green Translucent',
-									 unitprice: 125.00});
+									 name	:'Brick 1X2 Green Translucent',
+									 price	:125.00,
+									 attr	:'1x2 Green'});
 	app.B1X2Red = new app.LegoItem({image:'Brick/04Brick1X2RedTranslucent.png',
 									 name: 'Brick 1X2 Red Translucent',
-									 unitprice: 125.00});
+									 price: 125.00,
+									 attr	:'1x2 Red'});
 	app.B1X2Yel = new app.LegoItem({image:'Brick/02Brick1X2YellowTranslucent.png',
 									 name: 'Brick 1X2 Yellow',
-									 unitprice: 125.00});
+									 price: 125.00,
+									 attr	:'1x2 Yellow'});
 	app.B2X4Grey = new app.LegoItem({image:'Brick/05Brick2X4Grey.png',
 									 name: 'Brick 2X4 Grey',
-									 unitprice: 125.00});
+									 price: 125.00,
+									 attr	:'2x4 Grey'});
 	app.T1X2DarkGrey = new app.LegoItem({image:'Tile/06Tile1X2DarkGrey.png',
 									 name: 'Tile 1X2 Dark Grey',
-									 unitprice: 125.00});
+									 price: 125.00,
+									 attr	:'1x2'});
 	//Create Brick Collection
 	app.Bricks = new app.LegoItems([app.B1X2Grey,
 								app.B1X2Green,
@@ -421,21 +476,26 @@ $(function(){
 
 	//PLATE
 	//Create Plate Models
-	app.P1X2Grey = new app.LegoItem({image:'Plate/Plate 1X2 Grey.png',
+	app.P1X2Grey = new app.LegoItem({image:'Plate/07Plate1X2Grey.png',
 									 name: 'Plate 1X2 Grey',
-									 unitprice: 125.00});
-	app.P1X4Grey = new app.LegoItem({image:'Plate/Plate 1X4 Grey.png',
+									 price: 125.00,
+									 attr: '1x2 Grey'});
+	app.P1X4Grey = new app.LegoItem({image:'Plate/08Plate1X4Grey.png',
 									 name: 'Plate 1X4 Grey',
-									 unitprice: 125.00});
-	app.PwH2X4Grey = new app.LegoItem({image:'Plate/Plate with Holes 2X4 Grey.png',
+									 price: 125.00,
+									 attr: '1x4 Grey'});
+	app.PwH2X4Grey = new app.LegoItem({image:'Plate/09PlateWithHoles2X4Grey.png',
 									 name: 'Plate with Holes 2X4 Grey',
-									 unitprice: 125.00});
-	app.PwH2X6Grey = new app.LegoItem({image:'Plate/Plate with Holes 2X6 Grey.png',
+									 price: 125.00,
+									 attr: '2x4 Grey'});
+	app.PwH2X6Grey = new app.LegoItem({image:'Plate/10PlateWithHoles2X6Grey.png',
 									 name: 'Plate with Holes 2X6 Grey',
-									 unitprice: 125.00});
-	app.PwH2X8Grey = new app.LegoItem({image:'Plate/Plate with Holes 2X8 Grey.png',
+									 price: 125.00,
+									 attr: '2x6 Holes Grey'});
+	app.PwH2X8Grey = new app.LegoItem({image:'Plate/11PlateWithHoles2X8Grey.png',
 									 name: 'Plate with Holes 2X8 Grey',
-									 unitprice: 125.00});
+									 price: 125.00,
+									 attr: '2x8 Holes Grey'});
 	//Create Plate Collection
 	app.Plate = new app.LegoItems([app.P1X2Grey,
 								app.P1X4Grey,
@@ -448,27 +508,34 @@ $(function(){
 	
 	//BEAM
 	//Create Beam Models
-	app.B3DG = new app.LegoItem({image:'Beam/Beam 3-Module Dark Grey.png',
+	app.B3DG = new app.LegoItem({image:'Beam/23Beam3ModuleDarkGrey.png',
 									 name: 'Beam 3-Module Dark Grey',
-									 unitprice: 125.00});
-	app.B5DG = new app.LegoItem({image:'Beam/Beam 5-Module Dark Grey.png',
+									 price: 125.00,
+									 attr: '3-Module'});
+	app.B5DG = new app.LegoItem({image:'Beam/24Beam5ModuleDarkGrey.png',
 									 name: 'Beam 5-Module Dark Grey',
-									 unitprice: 187.50});
-	app.B7DG = new app.LegoItem({image:'Beam/Beam 7-Module Dark Grey.png',
+									 price: 187.50,
+									 attr: '5-Module'});
+	app.B7DG = new app.LegoItem({image:'Beam/25Beam7ModuleDarkGrey.png',
 									 name: 'Beam 7-Module Dark Grey',
-									 unitprice: 187.50});
-	app.B9DG = new app.LegoItem({image:'Beam/Beam 9-Module Dark Grey.png',
+									 price: 187.50,
+									 attr: '7-Module'});
+	app.B9DG = new app.LegoItem({image:'Beam/26Beam9ModuleDarkGrey.png',
 									 name: 'Beam 9-Module Dark Grey',
-									 unitprice: 125.00});
-	app.B11DG = new app.LegoItem({image:'Beam/Beam 11-Module Dark Grey.png',
+									 price: 125.00,
+									 attr: '9-Module'});
+	app.B11DG = new app.LegoItem({image:'Beam/27Beam11ModuleDarkGrey.png',
 									 name: 'Beam 11-Module Dark Grey',
-									 unitprice: 250.00});
-	app.B13DG = new app.LegoItem({image:'Beam/Beam 13-Module Dark Grey.png',
+									 price: 250.00,
+									 attr: '11-Module'});
+	app.B13DG = new app.LegoItem({image:'Beam/28Beam13ModuleDarkGrey.png',
 									 name: 'Beam 13-Module Dark Grey',
-									 unitprice: 625.00});
-	app.B15DG = new app.LegoItem({image:'Beam/Beam 15-Module Dark Grey.png',
+									 price: 625.00,
+									 attr: '13-Module'});
+	app.B15DG = new app.LegoItem({image:'Beam/29Beam15ModuleDarkGrey.png',
 									 name: 'Beam 15-Module Dark Grey',
-									 unitprice: 125.00});
+									 price: 125.00,
+									 attr: '15-Module'});
 	//Create Beam Collection
 	app.Beam = new app.LegoItems([app.B3DG,
 								app.B5DG,
@@ -487,15 +554,15 @@ $(function(){
 	
 	//app.account1 = new app.Account({name:'1111',balance:'500'});
 	//app.account2 = new app.Account({name:'2222',balance:'750'});
-	//app.accounts = new app.Accounts([app.account1, app.account2]);
+	//app.accountlist = new app.Accounts([app.account1, app.account2]);
 	//app.LegoTypeview = new app.LegoTypeView({model:app.BrickList});
 
 	app.appview = new app.appView({legotypes:app.LegoLists});
 
-	//app.accounts = new app.Accounts();
+	//app.accountlist = new app.Accounts();
 	/*
-	app.accounts.fetch().pipe(function(){
-			app.accounts.each(function(account){
+	app.accountlist.fetch().pipe(function(){
+			app.accountlist.each(function(account){
 				//alert(account.get('id'));
 				var name = account.get('name');
 				var balance = account.get('balance');
@@ -510,27 +577,27 @@ $(function(){
 	/*
 		$totalprice = $("#TotalPrice");
 		$subprice = $(this).parent().parent().parent().parent().find(".subprice").find("span");
-		$unitprice = $(this).parent().siblings().find(".unitprice");
+		$price = $(this).parent().siblings().find(".price");
 		$price = $(this).siblings("h4").find(".price");
 		$num = $(this).siblings("span");
 		
 		totalprice = parseFloat($totalprice.text(),10);
 		subprice = parseFloat($subprice.text(),10);
-		unitprice = parseFloat($unitprice.text(),10);
+		price = parseFloat($price.text(),10);
 		price = parseFloat($price.text(),10);
 		num = parseInt($num.text(),10);
 		
 		if($(this).attr('act')=="plus"){
 			$num.text(num+1);
-			$price.text((num+1)*unitprice);
-			$subprice.text(subprice+unitprice);
-			$totalprice.text(totalprice+unitprice);
+			$price.text((num+1)*price);
+			$subprice.text(subprice+price);
+			$totalprice.text(totalprice+price);
 		}else{
 			if(num>0){
 				$num.text(num-1);
-				$price.text((num-1)*unitprice);
-				$subprice.text(subprice-unitprice);
-				$totalprice.text(totalprice-unitprice);
+				$price.text((num-1)*price);
+				$subprice.text(subprice-price);
+				$totalprice.text(totalprice-price);
 			}
 		}
 		*/

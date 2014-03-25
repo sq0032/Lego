@@ -1,14 +1,7 @@
 from django.db import models
-
+from item.models import Type, Item
 # Create your models here.
 
-    
-class Item(models.Model):
-    name    = models.CharField(max_length=100)
-    type    = models.CharField(max_length=100)
-    
-    def __unicode__(self):
-        return self.name
     
 
 class Account(models.Model):
