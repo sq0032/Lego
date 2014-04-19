@@ -10,7 +10,42 @@
 
 </head>
 <body>
-<div id="test">
+<div id="flashContent" style="position:fixed; left:200px; top:200px">
+	<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" width="600" height="400" id="CheckOut System" align="middle">
+		<param name="movie" value="flash/CheckOut System.swf" />
+		<param name="quality" value="high" />
+		<param name="bgcolor" value="#ffffff" />
+		<param name="play" value="true" />
+		<param name="loop" value="true" />
+		<param name="wmode" value="window" />
+		<param name="scale" value="showall" />
+		<param name="menu" value="true" />
+		<param name="devicefont" value="false" />
+		<param name="salign" value="" />
+		<param name="allowScriptAccess" value="sameDomain" />
+		<!--[if !IE]>-->
+		<object type="application/x-shockwave-flash" data="flash/CheckOut System.swf" width="600" height="400">
+			<param name="movie" value="flash/CheckOut System.swf" />
+			<param name="quality" value="high" />
+			<param name="bgcolor" value="#ffffff" />
+			<param name="play" value="true" />
+			<param name="loop" value="true" />
+			<param name="wmode" value="window" />
+			<param name="scale" value="showall" />
+			<param name="menu" value="true" />
+			<param name="devicefont" value="false" />
+			<param name="salign" value="" />
+			<param name="allowScriptAccess" value="sameDomain" />
+		<!--<![endif]-->
+			<a href="http://www.adobe.com/go/getflash">
+				<img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="取得 Adobe Flash 播放程式" />
+			</a>
+		<!--[if !IE]>-->
+		</object>
+		<!--<![endif]-->
+	</object>
+	
+	<button id="closeFlash">Close</button>
 </div>
 
 <div id="App">
@@ -44,11 +79,7 @@
 	<div class="tab-content"></div>
 </div>
 
-<!--
-<button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#accountModel">
-  Launch demo modal
-</button>
--->
+
 <!-- Account Registration Modal -->
 <div class="modal fade" id="RegModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -119,6 +150,11 @@
 	<script src="js/underscore-min.js"></script>
 	<script src="js/backbone-min.js"></script>
 	<script src="js/main.js"></script>
+	<script>
+		$('#closeFlash').click(function(){
+			$('#flashContent').css('display','none');
+		});
 	
+	</script>
 </body>
 </html>

@@ -20,8 +20,12 @@ urlpatterns = patterns('',
     url(r'^css/(?P<path>.*)$', 'django.views.static.serve', {'document_root': os.path.join(settings.PROJECT_PATH, 'static/css')}),
     url(r'^js/(?P<path>.*)$', 'django.views.static.serve', {'document_root': os.path.join(settings.PROJECT_PATH, 'static/js')}),
     url(r'^img/(?P<path>.*)$', 'django.views.static.serve', {'document_root': os.path.join(settings.PROJECT_PATH, 'static/img')}),
+    url(r'^flash/(?P<path>.*)$', 'django.views.static.serve', {'document_root': os.path.join(settings.PROJECT_PATH, 'static/flash')}),
     
     url(r'^account/', include('account.urls')),
     
+    url(r'^crossdomain.xml$',
+    'flashpolicies.views.simple',
+    {'domains': ['http://127.0.0.1/']}),
     url(r'^$', 'LegoCheckoutSystem.views.index'),
 )
