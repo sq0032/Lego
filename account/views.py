@@ -33,6 +33,15 @@ def account(request):
 
 
 def hello(request):
-        
+    if request.method == 'POST':
+        data = []
+        data.append({'data':request.body})
+        #print(data)
+        return HttpResponse(json.dumps(data))
+    else:
+        data = []
+        data.append({'data':'fail'})
+        return HttpResponse(json.dumps(data))
     
-    return HttpResponse('Hello World')
+    
+    
