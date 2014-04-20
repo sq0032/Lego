@@ -10,6 +10,7 @@ from account import views
 
 urlpatterns = patterns('',
     url(r'^$', views.account),
+    url(r'^hello/$', views.hello),
 #    url(r'^items/$', views.ItemsList.as_view()),
 #    url(r'^items/i/$', views.items_i),
 #    url(r'^items/(?P<id>[0-9]+)$', views.ItemsDetail.as_view()),

@@ -23,5 +23,16 @@ def account(request):
         account = Account(name=data['name'],balance=data['balance'])
         account.save()
 #        print data['name']
+#    elif request.method == 'UPDATA':
+#        #do nothing
+#    elif request.method == 'DELETE':
+#        #do nothing
+#        a = 0
 
     return HttpResponse(json.dumps(res))
+
+
+def hello(request):
+        
+    
+    return HttpResponse('Hello World')
