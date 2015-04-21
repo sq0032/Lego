@@ -438,12 +438,20 @@ app.appView = Backbone.View.extend({
         var that = this;
         setInterval(function () {
             var t = new Date();
-            var hrs = 17-  t.getHours();
+            var hrs = 17 - t.getHours();
             var mins = 60 - t.getMinutes();
-            that.$('#remainedTime').html( 'Event ends in <strong>'+hrs+'</strong> hrs and <strong>'+mins+'</strong> mins' );
-            
             var factor = (hrs*60.+mins)/420.*100;
-            that.$('#selling-factor').html( 'Sell for <strong><span>'+parseInt(factor)+'</span>%</strong> of the original price');
+            if( t.getHours()<10||t.getHours()>18 ){
+                that.$('#remainedTime').html( 'Event start at <strong>10 am</strong>' );
+                that.$('#selling-factor').html( 'Sell for <strong><span>'+parseInt(100)+'</span>%</strong> of the original price');
+            }else if( t.getHours()>=17&&t.getHours()<18){
+                that.$('#remainedTime').html( 'Event is over' );
+                that.$('#selling-factor').html( 'Sell for <strong><span>'+parseInt(0)+'</span>%</strong> of the original price');
+            }else{
+                that.$('#remainedTime').html( 'Event ends in <strong>'+hrs+'</strong> hrs and <strong>'+mins+'</strong> mins' );
+                that.$('#selling-factor').html( 'Sell for <strong><span>'+parseInt(factor)+'</span>%</strong> of the original price');
+            }
+            
             
         }, 1000);
 	},
