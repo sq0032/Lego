@@ -46,7 +46,7 @@ app.LegoType = Backbone.Model.extend({
 
 //Type Collection
 app.LegoTypes = Backbone.Collection.extend({
-	model: app.LegoType,
+	model: app.LegoType
 });
 
 //Account View
@@ -105,7 +105,7 @@ app.LegoItemView = Backbone.View.extend({
 		this.$el.html(
 			'  <div class="	col-sm-6 col-md-3">\
 				<div class="thumbnail">\
-				  <img src="img/'+imagepath+'" alt="...">\
+				  <img src="'+imagepath+'" alt="...">\
 				  <p class="thumb-price">'+price+'</p>\
 				  <p class="thumb-description">'+attr+'</p>\
 				  <div class="caption">\
@@ -117,7 +117,7 @@ app.LegoItemView = Backbone.View.extend({
 							<span class="glyphicon glyphicon-plus"></span>\
 						</button>\
 						<span class="thumb-curquantity">\
-							0\
+							\
 						</span>\
 						<span class="thumb-newquantity" style="display:none">0</span>\
 					</p>\
@@ -165,9 +165,14 @@ app.LegoTypeView = Backbone.View.extend({
 		this.legoitemview = [];
 	
 		//Define Actions
-		this.listenTo(this.model, "change", this.renderItem);
 		this.addTab(this.model);
 		$(this.el).attr('id', this.model)
+        
+        this.items = new app.LegoItems();
+        this.items.url = '/item/types/'+this.model.id;
+        this.listenTo(this.items, "reset", this.renderItems);
+        
+        this.items.fetch({'reset':true});
 	},
 	render: function(){
 		var typename = this.model.get('typename');
@@ -180,22 +185,22 @@ app.LegoTypeView = Backbone.View.extend({
 		
 //console.log(this.model.legoitems);
 		//this.model.get('legoitems').each(function(item){
-		this.model.legoitems.each(function(item){
-			this.renderItem(item);
-		},this);
+//		this.model.legoitems.each(function(item){
+//			this.renderItem(item);
+//		},this);
 		
 		return this;
 	},
-	renderItem: function(item){
-//console.log(item.get('image'));
-		var LegoItemview = new app.LegoItemView({model:item});
-		this.$el.append(LegoItemview.render().el);
-		this.legoitemview.push(LegoItemview);
-		//this.$('.panel-collapse').append(item.get('name'));
-		//app.appview.typeviews[1].model.legoitems
+	renderItems: function(){
+        var that = this;
+        this.items.each(function(item){
+            var LegoItemview = new app.LegoItemView({model:item});
+            that.$el.append(LegoItemview.render().el);
+            that.legoitemview.push(LegoItemview);
+        });
 	},
 	addTab: function(item){
-		var type = this.model.get('typename');
+		var type = this.model.get('name');
 		var $li = $("<li></li>");
 		var $a = $("<a></a>");
 		$a.attr('href','#'+this.id).attr('data-toggle','tab').text(type);
@@ -219,6 +224,7 @@ app.RegModalView = Backbone.View.extend({
 		this.$balance.val('');
 	},
 	createAccount:function(){
+        var that = this;
 		var name = this.$name.val();
 		var balance = this.$balance.val();
 		//alert('account:'+name+'  balance:'+balance);
@@ -226,9 +232,18 @@ app.RegModalView = Backbone.View.extend({
 		var data = {name:name,balance:balance};
 		var account = new app.Account(data);
 		account.url = 'account/';
+        
+        account.save(null,{
+            success:function(model, response){
+                app.accountlist.add(model);
+                $('#RegModal').modal('hide');
+            },
+            error:function(model, response){
+                alert('create account error');
+            }
+        });
 		
-		app.accountlist.create(account);
-		$('#RegModal').modal('hide');
+//		app.accountlist.add(account);
 	},
 });
 
@@ -264,6 +279,8 @@ app.CheckoutModalView = Backbone.View.extend({
 		
 		//Search num of items for buying or selling
 		//Looking into each lego type
+        var sell_factor = parseInt($('#selling-factor span').html())/100.;
+//        sell_factor = sell_factor.toFixed(2);
 		for(var i=0; i< app.appview.typeviews.length; i++){
 			//Looking into each lego item
 			for( var j=0; j<app.appview.typeviews[i].legoitemview.length; j++){
@@ -272,7 +289,13 @@ app.CheckoutModalView = Backbone.View.extend({
 				var n 		= view.$('.thumb-newquantity').text();
 				var price 	= view.$('.thumb-price').text();
 				var name 	= view.model.get('name');
-				var sum 	= parseInt(n)*parseFloat(price);
+                if( n<0 ){
+				    var sum 	= parseInt(n)*parseFloat(price)*sell_factor;
+                }else{
+				    var sum 	= parseInt(n)*parseFloat(price);
+                }
+                sum = parseFloat(sum.toFixed(2));
+                console.log(parseInt($('#selling-factor span').html()));
 				total = total + sum;
 				sum = sum.toString();
 				
@@ -317,21 +340,27 @@ app.CheckoutModalView = Backbone.View.extend({
 		balance = balance-parseFloat(cost);
 		
 		//Update balance value for account models
-		app.account.set({balance:(balance).toFixed(2)});
 		var account = app.accountlist.get(app.account.get('id'));
-		account.set({balance:(balance).toFixed(2)});
-		
-		//Clear cart
-		for(var i=0; i< app.appview.typeviews.length; i++){
-			//Looking into each lego item
-			for( var j=0; j<app.appview.typeviews[i].legoitemview.length; j++){
-				var view = app.appview.typeviews[i].legoitemview[j];
-				view.$('.thumb-newquantity').text(0).css('display','none');
-			}
-		}
-		
-		//Close the modal
-		$('#CheckoutModal').modal('hide');
+        account.url = '/account/'+account.id;
+		account.set({balance:parseFloat(balance.toFixed(2))});
+        account.save(null,{
+            success:function(model, response){
+                app.account.set({balance:parseFloat(balance.toFixed(2))});
+                //Clear cart
+                for(var i=0; i< app.appview.typeviews.length; i++){
+                    //Looking into each lego item
+                    for( var j=0; j<app.appview.typeviews[i].legoitemview.length; j++){
+                        var view = app.appview.typeviews[i].legoitemview[j];
+                        view.$('.thumb-newquantity').text(0).css('display','none');
+                    }
+                }
+                //Close the modal
+                $('#CheckoutModal').modal('hide');
+            },
+            error:function(model, response){
+                alert('checkout account error');
+            }
+        });
 
 	},
 });
@@ -352,31 +381,34 @@ app.appView = Backbone.View.extend({
 		app.CheckoutModalView = new app.CheckoutModalView();
 
 		//Local Variables-Models
-		this.legotypes = option.legotypes;
-		this.accounts = option.accounts;
+//		this.legotypes = option.legotypes;
+//		this.accounts = option.accounts;
 
+        this.legotypes = new app.LegoTypes();
+        this.legotypes.url = '/item/types';
+        
 		//Local Variables-Views
 		this.typeviews = [];
 		this.accountviews = [];
 		
-		this.listenTo(this.legotypes, "change", this.renderType);
-		//this.listenTo(app.accountlist, "sync", this.renderAccounts);
+		this.listenTo(this.legotypes, "reset", this.renderTypes);
+		this.listenTo(app.accountlist, "reset", this.renderAccounts);
 		this.listenTo(app.accountlist, "add", this.renderAccount);
-		//this.listenTo(app.accountlist, "change", this.renderAccount);
 		this.listenTo(app.account, "change", this.renderTest);
+        
 		this.render();
-		this.renderType();
 		
-		app.accountlist.fetch();
+        this.legotypes.fetch({'reset':true});
+		app.accountlist.fetch({'reset':true});
 	},
 	render:function(){
 		var that = this;
 		
 		this.$el.html(
-			'<nav class="navbar navbar-default">\
+			'<nav class="navbar navbar-default navbar-fixed-top">\
 				<div class="container">\
 				<!-- Brand and toggle get grouped for better mobile display -->\
-					<a class="navbar-brand" style="position:absolute;" href="#">Brand</a>\
+					<a class="navbar-brand" style="position:absolute;" href="#">MBET LEGO SHOP</a>\
 					<ul class="nav navbar-nav nav-pills pull-right">\
 						<li class="dropdown">\
 							<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span id="account-title">Account</span><b class="caret"></b></a>\
@@ -388,25 +420,47 @@ app.appView = Backbone.View.extend({
 					</ul>\
 				</div><!-- /.container-fluid -->\
 			</nav>\
-			<!-- Nav tabs -->\
-			<ul class="nav nav-tabs"></ul>\
-			<!-- Tab panes -->\
-			<div class="tab-content"></div>\
+            <div id="app-containner">\
+                <!-- Nav tabs -->\
+                <ul class="nav nav-tabs"></ul>\
+                <!-- Tab panes -->\
+                <div class="tab-content"></div>\
+            </div>\
 			\
 			\
 			\
+            <div id="remainedTime" style="position:fixed; bottom:30px; right:300px"></div>\
+            <div id="selling-factor" style="position:fixed; bottom:10px; right:300px"></div>\
 			<button id="resetBtn" style="position:fixed; bottom:20px; right:160px" type="button" class="btn btn-default">Reset</button>\
 			<button id="checkoutBtn" style="position:fixed; bottom:20px; right:50px" type="button" class="btn btn-primary">Checkout</button>'
 		);
+        
+        var that = this;
+        setInterval(function () {
+            var t = new Date();
+            var hrs = 17-  t.getHours();
+            var mins = 60 - t.getMinutes();
+            that.$('#remainedTime').html( 'Event ends in <strong>'+hrs+'</strong> hrs and <strong>'+mins+'</strong> mins' );
+            
+            var factor = (hrs*60.+mins)/420.*100;
+            that.$('#selling-factor').html( 'Sell for <strong><span>'+parseInt(factor)+'</span>%</strong> of the original price');
+            
+        }, 1000);
 	},
-	renderType:function(){
+	renderTypes:function(){
 		var that = this;
 		
 		this.legotypes.each(function(type, index){
-			var LegoTypeview = new app.LegoTypeView({model:type, id:index});
-			$(".tab-content").append(LegoTypeview.render().el);
-			that.typeviews.push(LegoTypeview);
+            console.log(type);
+			var legoTypeView = new app.LegoTypeView({model:type, id:index});
+			that.$(".tab-content").append(legoTypeView.render().el);
+            console.log(legoTypeView.el);
+			that.typeviews.push(legoTypeView);
 		},this);
+        this.$(".nav-tabs li").first().addClass('active');
+        this.$(".tab-pane").first().addClass('active');
+//        console.log(this.$(".nav-tabs li").first());
+        
 	},
 	renderAccounts:function(){
 		//alert('complete sync');
@@ -424,6 +478,14 @@ app.appView = Backbone.View.extend({
 		$('#RegModal').modal('show');
 	},
 	reset:function(){
+		//Clear cart
+		for(var i=0; i< app.appview.typeviews.length; i++){
+			//Looking into each lego item
+			for( var j=0; j<app.appview.typeviews[i].legoitemview.length; j++){
+				var view = app.appview.typeviews[i].legoitemview[j];
+				view.$('.thumb-newquantity').text(0).css('display','none');
+			}
+		}  
 	},
 	checkout:function(){
 		$('#CheckoutModal').modal('show');
@@ -505,7 +567,6 @@ $(function(){
 	//Create Plate Type Model
 	app.PlateList = new app.LegoType({typename:'Plate', legoitems:app.Plate});
 
-	
 	//BEAM
 	//Create Beam Models
 	app.B3DG = new app.LegoItem({image:'Beam/23Beam3ModuleDarkGrey.png',

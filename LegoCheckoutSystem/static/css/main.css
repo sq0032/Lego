@@ -5,6 +5,15 @@ body{
 	margin-right: auto;
 }
 
+#app-containner{
+    position: absolute;
+    top: 50px;
+    bottom: 80px;
+    left: 0px;
+    right: 0px;
+    overflow-y: auto;
+}
+
 .panel-heading{
 	position:relative;
 }
@@ -24,6 +33,10 @@ body{
 
 .item-num{
 	margin:20px;
+}
+
+.thumbnail img{
+    height: 80px;
 }
 
 .thumbnail .thumb-price{

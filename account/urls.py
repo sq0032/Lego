@@ -9,7 +9,8 @@ from django.conf.urls import patterns, url
 from account import views
 
 urlpatterns = patterns('',
-    url(r'^$', views.account),
+    url(r'^$', views.accounts),
+    url(r'^(\d+)$', views.account),
     url(r'^hello/$', views.hello),
 #    url(r'^items/$', views.ItemsList.as_view()),
 #    url(r'^items/i/$', views.items_i),

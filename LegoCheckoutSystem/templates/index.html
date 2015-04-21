@@ -10,43 +10,7 @@
 
 </head>
 <body>
-<div id="flashContent" style="position:fixed; left:200px; top:200px">
-	<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" width="600" height="400" id="CheckOut System" align="middle">
-		<param name="movie" value="flash/CheckOut System.swf" />
-		<param name="quality" value="high" />
-		<param name="bgcolor" value="#ffffff" />
-		<param name="play" value="true" />
-		<param name="loop" value="true" />
-		<param name="wmode" value="window" />
-		<param name="scale" value="showall" />
-		<param name="menu" value="true" />
-		<param name="devicefont" value="false" />
-		<param name="salign" value="" />
-		<param name="allowScriptAccess" value="sameDomain" />
-		<!--[if !IE]>-->
-		<object type="application/x-shockwave-flash" data="flash/CheckOut System.swf" width="600" height="400">
-			<param name="movie" value="flash/CheckOut System.swf" />
-			<param name="quality" value="high" />
-			<param name="bgcolor" value="#ffffff" />
-			<param name="play" value="true" />
-			<param name="loop" value="true" />
-			<param name="wmode" value="window" />
-			<param name="scale" value="showall" />
-			<param name="menu" value="true" />
-			<param name="devicefont" value="false" />
-			<param name="salign" value="" />
-			<param name="allowScriptAccess" value="sameDomain" />
-		<!--<![endif]-->
-			<a href="http://www.adobe.com/go/getflash">
-				<img src="http://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" alt="取得 Adobe Flash 播放程式" />
-			</a>
-		<!--[if !IE]>-->
-		</object>
-		<!--<![endif]-->
-	</object>
-	
-	<button id="closeFlash">Close</button>
-</div>
+
 
 <div id="App">
 	<nav class="navbar navbar-default">
@@ -72,11 +36,13 @@
 	  </div><!-- /.container-fluid -->
 	</nav>
 
-	<!-- Nav tabs -->
-	<ul class="nav nav-tabs"></ul>
+    <div id="app-containner">
+        <!-- Nav tabs -->
+        <ul class="nav nav-tabs"></ul>
 
-	<!-- Tab panes -->
-	<div class="tab-content"></div>
+        <!-- Tab panes -->
+        <div class="tab-content"></div>
+    </div>
 </div>
 
 
@@ -93,7 +59,7 @@
 		  <div class="form-group">
 			<label for="inputAccount" class="col-sm-2 control-label">Account</label>
 			<div class="col-sm-10">
-			  <input type="text" class="form-control" id="inputAccount" placeholder="Account Number">
+			  <input type="text" class="form-control" id="inputAccount" placeholder="Account Name">
 			</div>
 		  </div>
 		  <div class="form-group">

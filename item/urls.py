@@ -10,6 +10,8 @@ from item import views
 
 urlpatterns = patterns('',
     url(r'^$', views.item),
+    url(r'^types$', views.types),
+    url(r'^types/(\d+)$', views.items),
 #    url(r'^items/$', views.ItemsList.as_view()),
 #    url(r'^items/i/$', views.items_i),
 #    url(r'^items/(?P<id>[0-9]+)$', views.ItemsDetail.as_view()),
